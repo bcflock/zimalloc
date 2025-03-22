@@ -212,7 +212,7 @@ void mi_options_print(void) mi_attr_noexcept
       #else
       ""
       #endif
-      , __DATE__, __TIME__);
+      , 0, 0);//__DATE__, __TIME__);
 
   // show options
   for (int i = 0; i < _mi_option_last; i++) {
