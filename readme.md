@@ -3,7 +3,11 @@
 
 [<img align="right" src="https://dev.azure.com/Daan0324/mimalloc/_apis/build/status/microsoft.mimalloc?branchName=dev"/>](https://dev.azure.com/Daan0324/mimalloc/_build?definitionId=1&_a=summary)
 
+**The documentation for this fork of microsoft/mimalloc is still being worked on**
+
 # mimalloc
+
+
 
 &nbsp;
 

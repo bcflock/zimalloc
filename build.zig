@@ -5,18 +5,13 @@ pub fn build(b: *std.Build) void {
     const target = b.standardTargetOptions(.{});
     const optimize = b.standardOptimizeOption(.{});
 
-    //const mimalloc_dep = b.dependency("mimalloc", .{
-    //    .target = target,
-    //    .optimize = optimize,
-    //});
-    const mimalloc_dep = b;
     const lib = b.addStaticLibrary(.{
         .name = "mimalloc",
         .target = target,
         .optimize = optimize,
     });
-    lib.addIncludePath(mimalloc_dep.path("include"));
-    lib.addIncludePath(mimalloc_dep.path("include/mimalloc"));
+    lib.addIncludePath(b.path("include"));
+    lib.addIncludePath(b.path("include/mimalloc"));
     lib.linkLibC();
 
     const mi_version = "2";
@@ -420,8 +415,8 @@ pub fn build(b: *std.Build) void {
             .target = target,
             .optimize = optimize,
         });
-        shared_lib.addIncludePath(mimalloc_dep.path("include"));
-        shared_lib.addIncludePath(mimalloc_dep.path("include/mimalloc"));
+        shared_lib.addIncludePath(b.path("include"));
+        shared_lib.addIncludePath(b.path("include/mimalloc"));
         for (mi_cflags.items) |item| {
             cflags.append(item) catch return;
         }
@@ -433,7 +428,7 @@ pub fn build(b: *std.Build) void {
         }
         shared_lib.linkLibC();
 
-        shared_lib.addCSourceFiles(.{ .files = &mi_sources, .flags = cflags.items, .root = mimalloc_dep.path(".") });
+        shared_lib.addCSourceFiles(.{ .files = &mi_sources, .flags = cflags.items, .root = b.path(".") });
 
         b.installArtifact(shared_lib);
 
@@ -478,7 +473,7 @@ pub fn build(b: *std.Build) void {
         const static_lib = b.addStaticLibrary(.{ .name = "mimalloc-static", .target = target, .optimize = optimize });
         //static_lib.root_module.addCMacro("__TIME__", "\"T\"");
         //static_lib.root_module.addCMacro("__DATE__", "\"D\"");
-        static_lib.addIncludePath(mimalloc_dep.path("include"));
+        static_lib.addIncludePath(b.path("include"));
         var cflags = std.ArrayList([]const u8).init(b.allocator);
         defer cflags.deinit();
         for (mi_cflags.items) |item| {
@@ -494,7 +489,7 @@ pub fn build(b: *std.Build) void {
         static_lib.addCSourceFiles(.{
             .files = &mi_sources,
             .flags = cflags.items,
-            .root = mimalloc_dep.path("."),
+            .root = b.path("."),
         });
         b.installArtifact(static_lib);
     }
@@ -509,7 +504,7 @@ pub fn build(b: *std.Build) void {
         const obj_lib = b.addSharedLibrary(.{ .name = "mimalloc-obj", .target = target, .optimize = optimize });
         obj_lib.root_module.addCMacro("__TIME__", "\"T\"");
         obj_lib.root_module.addCMacro("__DATE__", "\"D\"");
-        obj_lib.addIncludePath(mimalloc_dep.path("include"));
+        obj_lib.addIncludePath(b.path("include"));
         var cflags = std.ArrayList([]const u8).init(b.allocator);
         defer cflags.deinit();
         for (mi_cflags.items) |flag| {
@@ -519,7 +514,7 @@ pub fn build(b: *std.Build) void {
             cflags.append(flag) catch return;
         }
         obj_lib.linkLibC();
-        obj_lib.addCSourceFile(.{ .flags = cflags.items, .file = mimalloc_dep.path("src/static.c") });
+        obj_lib.addCSourceFile(.{ .flags = cflags.items, .file = b.path("src/static.c") });
     }
 
     //tests
@@ -531,8 +526,8 @@ pub fn build(b: *std.Build) void {
             defer cflags.deinit();
             const exe_source: []const u8 = std.fmt.allocPrint(b.allocator, "test/test-{s}.c", .{test_name}) catch unreachable;
             const exe = b.addExecutable(.{ .name = std.fmt.allocPrint(b.allocator, "mimalloc-test-{s}", .{test_name}) catch unreachable, .target = target, .optimize = optimize });
-            exe.addIncludePath(mimalloc_dep.path("include"));
-            exe.addCSourceFile(.{ .file = mimalloc_dep.path(exe_source), .flags = cflags.items });
+            exe.addIncludePath(b.path("include"));
+            exe.addCSourceFile(.{ .file = b.path(exe_source), .flags = cflags.items });
             for (mi_cflags.items) |flag| {
                 cflags.append(flag) catch return;
             }
@@ -559,8 +554,8 @@ pub fn build(b: *std.Build) void {
             var cflags = std.ArrayList([]const u8).init(b.allocator);
             defer cflags.deinit();
             const exe = b.addExecutable(.{ .name = "mimalloc-test-stress-dynamic", .target = target, .optimize = optimize });
-            exe.addCSourceFile(.{ .file = mimalloc_dep.path("test/test-stress.c"), .flags = cflags.items });
-            exe.addIncludePath(mimalloc_dep.path("include"));
+            exe.addCSourceFile(.{ .file = b.path("test/test-stress.c"), .flags = cflags.items });
+            exe.addIncludePath(b.path("include"));
 
             exe.addLibraryPath(b.path("zig-out/lib"));
             exe.linkSystemLibrary("mimalloc");
@@ -580,7 +575,7 @@ pub fn build(b: *std.Build) void {
         if (builtin.target.os.tag != .windows) {
             if (MI_BUILD_STATIC) {
                 const static_lib = b.addStaticLibrary(.{ .name = "mimalloc-static", .target = target, .optimize = optimize });
-                static_lib.addIncludePath(mimalloc_dep.path("include"));
+                static_lib.addIncludePath(b.path("include"));
                 var cflags = std.ArrayList([]const u8).init(b.allocator);
                 defer cflags.deinit();
                 for (mi_cflags.items) |flag| {
@@ -589,7 +584,7 @@ pub fn build(b: *std.Build) void {
                 for (mi_cflags_static.items) |flag| {
                     cflags.append(flag) catch return;
                 }
-                static_lib.addCSourceFiles(.{ .files = &mi_sources, .root = mimalloc_dep.path("."), .flags = cflags.items });
+                static_lib.addCSourceFiles(.{ .files = &mi_sources, .root = b.path("."), .flags = cflags.items });
                 for (mi_libraries.items) |lib_name| {
                     static_lib.linkSystemLibrary(lib_name);
                 }
@@ -597,7 +592,7 @@ pub fn build(b: *std.Build) void {
             }
             if (MI_BUILD_OBJECT) {
                 const obj_lib = b.addStaticLibrary(.{ .name = "mimalloc-obj", .target = target, .optimize = optimize });
-                obj_lib.addIncludePath(mimalloc_dep.path("include"));
+                obj_lib.addIncludePath(b.path("include"));
                 var cflags = std.ArrayList([]const u8).init(b.allocator);
                 defer cflags.deinit();
                 for (mi_cflags.items) |flag| {
@@ -606,7 +601,7 @@ pub fn build(b: *std.Build) void {
                 for (mi_cflags_static.items) |flag| {
                     cflags.append(flag) catch return;
                 }
-                obj_lib.addCSourceFile(.{ .file = mimalloc_dep.path("src/static.c"), .flags = cflags.items });
+                obj_lib.addCSourceFile(.{ .file = b.path("src/static.c"), .flags = cflags.items });
                 obj_lib.linkLibC();
                 b.installArtifact(obj_lib);
             }
